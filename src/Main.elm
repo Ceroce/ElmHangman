@@ -18,9 +18,15 @@ main =
 
 -- MODEL
 
+type alias Game = 
+    { wordToGuess : String
+    , lettersTried : List String
+    , attempts : Int
+    }
+
 type Model = 
     Starting
-    | Guessing String
+    | Playing String
 
 init : () -> ( Model, Cmd Msg )
 init _ = 
@@ -48,7 +54,7 @@ update msg model =
             )
 
         Guess (maybeWord, _) ->
-            ( Guessing (wordOrDefault maybeWord)
+            ( Playing (wordOrDefault maybeWord)
             , Cmd.none
             )
 
@@ -77,10 +83,21 @@ view model =
             , button [ onClick Generate ] [ text "Start" ]
             ]
             
-
-        Guessing word ->
-            stringInDiv word
+        Playing word ->
+            div [] (map stringInDiv (lettersOf word))
+            
 
 stringInDiv : String -> Html Msg
 stringInDiv str =
    div [] [ text str ]
+
+
+lettersOf : String -> List String
+lettersOf str =
+    recLettersOf str []
+
+recLettersOf : String -> List String -> List String
+recLettersOf str acc =
+    if String.isEmpty str then acc 
+    else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
+        
