@@ -79,16 +79,16 @@ view model =
     case model of
         Starting ->
             div [] 
-            [ stringInDiv "Welcome to Hangman"
+            [ inDiv "Welcome to Hangman"
             , button [ onClick Generate ] [ text "Start" ]
             ]
             
         Playing word ->
-            div [] (map stringInDiv (lettersOf word))
+            div [] ( lettersOf word |> map inDiv )
             
 
-stringInDiv : String -> Html Msg
-stringInDiv str =
+inDiv : String -> Html Msg
+inDiv str =
    div [] [ text str ]
 
 
