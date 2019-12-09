@@ -1,8 +1,14 @@
 module Main exposing (main)
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
-import List exposing (map)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (Html)
+
+import List as List
 import Random
 import Random.List
 
@@ -76,20 +82,20 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    Element.layout [] <| 
     case model of
         Starting ->
-            div [] 
-            [ inDiv "Welcome to Hangman"
-            , button [ onClick Generate ] [ text "Start" ]
+            Element.column []
+            [ text "Welcome to Hangman"
+            , Input.button 
+            [ Background.color (rgb 0.4 0.6 1.0)
+            , padding 5
+            ] 
+                {onPress = Just Generate, label = text "Start" }
             ]
             
         Playing word ->
-            div [] ( lettersOf word |> map inDiv )
-            
-
-inDiv : String -> Html Msg
-inDiv str =
-   div [] [ text str ]
+            Element.row [] ( lettersOf word |> List.map text )
 
 
 lettersOf : String -> List String
