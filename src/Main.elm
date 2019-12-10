@@ -60,7 +60,7 @@ update msg model =
             )
 
         Guess (maybeWord, _) ->
-            ( Playing (wordOrDefault maybeWord)
+            ( Playing (wordOrDefault maybeWord |> String.toUpper)
             , Cmd.none
             )
 
@@ -88,15 +88,16 @@ view model =
             Element.column []
             [ text "Welcome to Hangman"
             , Input.button 
-            [ Background.color (rgb 0.4 0.6 1.0)
-            , padding 5
-            ] 
-                {onPress = Just Generate, label = text "Start" }
+                [ Background.color (rgb 0.4 0.6 1.0)
+                , padding 5
+                ] 
+                    {onPress = Just Generate, label = text "Start" }
             ]
             
         Playing word ->
-            Element.row [] ( lettersOf word |> List.map text )
-
+            Element.row 
+            [ spacing 4 ] 
+            ( lettersOf word |> List.map letterView )
 
 lettersOf : String -> List String
 lettersOf str =
@@ -106,4 +107,24 @@ recLettersOf : String -> List String -> List String
 recLettersOf str acc =
     if String.isEmpty str then acc 
     else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
+
+letterView : String -> Element Msg
+letterView letter = 
+    Element.el 
+        [ width (px 76)
+        , height (px 84)
+        , Font.size 64
+        , Font.family 
+            [ Font.typeface "Giorgia"
+            , Font.serif 
+            ]
+        , Font.center
+        , Font.color (rgb 0.45 0.35 0.25)
+        , Background.color (rgb 0.9 0.7 0.5)
+        , Border.rounded 6
+        , Border.color (rgb 0.45 0.35 0.25)
+        , Border.width 2
+        , padding 5
+        ] 
+        (text letter)
         
