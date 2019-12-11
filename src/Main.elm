@@ -84,20 +84,26 @@ view : Model -> Html Msg
 view model =
     Element.layout [] <| 
     case model of
-        Starting ->
-            Element.column []
-            [ text "Welcome to Hangman"
-            , Input.button 
-                [ Background.color (rgb 0.4 0.6 1.0)
-                , padding 5
-                ] 
-                    {onPress = Just Generate, label = text "Start" }
-            ]
-            
-        Playing word ->
-            Element.row 
-            [ spacing 4 ] 
-            ( lettersOf word |> List.map letterView )
+        Starting -> startingScreen
+        Playing word -> playingScreen word
+
+
+startingScreen : Element Msg
+startingScreen =
+    Element.column []
+        [ text "Welcome to Hangman"
+        , Input.button 
+            [ Background.color (rgb 0.4 0.6 1.0)
+            , padding 5
+            ] 
+                {onPress = Just Generate, label = text "Start" }
+        ]
+
+playingScreen : String -> Element Msg
+playingScreen word =
+    Element.row 
+        [ spacing 4 ] 
+        ( lettersOf word |> List.map letterView )
 
 lettersOf : String -> List String
 lettersOf str =
