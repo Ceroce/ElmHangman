@@ -50,6 +50,7 @@ words =
 type Msg = 
     Generate 
     | Guess (Maybe String, List String)
+    | Typed String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -63,6 +64,12 @@ update msg model =
             ( Playing (wordOrDefault maybeWord |> String.toUpper)
             , Cmd.none
             )
+
+        Typed letter ->
+            ( Playing "Toto"
+            , Cmd.none
+            )
+        
 
 wordOrDefault : Maybe String -> String
 wordOrDefault maybeWord = 
@@ -96,14 +103,41 @@ startingScreen =
             [ Background.color (rgb 0.4 0.6 1.0)
             , padding 5
             ] 
-                {onPress = Just Generate, label = text "Start" }
+            { onPress = Just Generate
+            , label = text "Start" 
+            }
         ]
 
 playingScreen : String -> Element Msg
 playingScreen word =
-    Element.row 
+    Element.column []
+    [ Element.row 
         [ spacing 4 ] 
         ( lettersOf word |> List.map letterView )
+    , Element.row []
+        [ hangmanView 0
+        , typingView
+        ]
+    ]
+    
+hangmanView : Int -> Element Msg
+hangmanView attempts =
+    Element.el 
+    [ width (px 100)
+    , height (px 100)
+    , Background.color (rgb 0.7 0.7 0.7)
+    ] 
+    ( attempts |> String.fromInt |> text)
+
+typingView : Element Msg
+typingView =
+    Input.text 
+        [ Input.focusedOnLoad ]
+        { label = Input.labelAbove [] (text "Type a letter" ) 
+        , onChange = Typed 
+        , placeholder = Nothing
+        , text = ""
+        }
 
 lettersOf : String -> List String
 lettersOf str =
