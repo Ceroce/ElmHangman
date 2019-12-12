@@ -1,5 +1,6 @@
-module Main exposing (main)
+module Main exposing (..)
 import Browser
+import Debug exposing (..)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -23,10 +24,14 @@ main =
     }
 
 -- MODEL
+type LetterBox =
+    Found String
+    | Unknown
 
 type alias Game = 
     { wordToGuess : String
     , lettersTried : List String
+    , letterBoxes : List LetterBox
     , attempts : Int
     }
 
@@ -68,6 +73,7 @@ update msg model =
                 game =
                     { wordToGuess = word
                     , lettersTried = []
+                    , letterBoxes = determineLetterBoxes [] word
                     , attempts = 0
                     }
 
@@ -76,14 +82,19 @@ update msg model =
                 , Cmd.none
                 )
 
-        Typed letter ->
+        Typed text ->
             case model of
                 Playing game -> 
-                    ( Playing 
-                        { game | lettersTried = game.lettersTried ++ [letter] 
-                        , attempts = game.attempts + 1 }
-                    , Cmd.none
-                    )
+                    let letter = String.right 1 text |> String.toUpper
+                        lettersTried = game.lettersTried ++ [letter]
+                        theLog = log "lettersTried" lettersTried
+                    in
+                        ( Playing 
+                            { game | lettersTried = lettersTried
+                            , letterBoxes = determineLetterBoxes lettersTried game.wordToGuess
+                            , attempts = game.attempts + 1 }
+                        , Cmd.none
+                        )
                 
                 _ -> (model, Cmd.none)
         
@@ -95,6 +106,28 @@ wordOrDefault maybeWord =
             word
         Nothing ->
             "D-Fault"
+
+determineLetterBoxes : List String -> String -> List LetterBox
+determineLetterBoxes lettersTried wordToGuess =
+    let wordLetters = lettersOf wordToGuess
+    in
+        List.map (determineLetterBox lettersTried) wordLetters 
+
+determineLetterBox : List String -> String ->  LetterBox
+determineLetterBox lettersTried letter  =
+    if List.member letter lettersTried then
+        Found letter
+    else
+        Unknown
+
+lettersOf : String -> List String
+lettersOf str =
+    recLettersOf str []
+
+recLettersOf : String -> List String -> List String
+recLettersOf str acc =
+    if String.isEmpty str then acc 
+    else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
 
 -- SUBSCRIPTIONS
 
@@ -130,10 +163,11 @@ playingScreen game =
     Element.column []
     [ Element.row 
         [ spacing 4 ] 
-        ( lettersOf game.wordToGuess |> List.map letterView )
+        ( game.letterBoxes |> List.map letterBoxView )
     , Element.row []
         [ hangmanView game.attempts
         , typingView
+        ,  text game.wordToGuess
         ]
     ]
     
@@ -156,23 +190,14 @@ typingView =
         , text = ""
         }
 
-lettersOf : String -> List String
-lettersOf str =
-    recLettersOf str []
-
-recLettersOf : String -> List String -> List String
-recLettersOf str acc =
-    if String.isEmpty str then acc 
-    else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
-
-letterView : String -> Element Msg
-letterView letter = 
+letterBoxView : LetterBox -> Element Msg
+letterBoxView letterBox = 
     Element.el 
         [ width (px 76)
         , height (px 84)
         , Font.size 64
         , Font.family 
-            [ Font.typeface "Giorgia"
+            [ Font.typeface "Georgia"
             , Font.serif 
             ]
         , Font.center
@@ -183,5 +208,10 @@ letterView letter =
         , Border.width 2
         , padding 5
         ] 
-        (text letter)
+        (text (stringOfLetterBox letterBox))
         
+stringOfLetterBox : LetterBox -> String
+stringOfLetterBox letterBox =
+    case letterBox of
+            Found letter -> letter
+            Unknown -> "_"
