@@ -32,7 +32,7 @@ type alias Game =
 
 type Model = 
     Starting
-    | Playing String
+    | Playing Game
 
 init : () -> ( Model, Cmd Msg )
 init _ = 
@@ -61,14 +61,29 @@ update msg model =
             )
 
         Guess (maybeWord, _) ->
-            ( Playing (wordOrDefault maybeWord |> String.toUpper)
-            , Cmd.none
-            )
+            let 
+                word = 
+                    wordOrDefault maybeWord |> String.toUpper
+
+                game =
+                    { wordToGuess = word
+                    , lettersTried = []
+                    , attempts = 0
+                    }
+
+            in
+                ( Playing game
+                , Cmd.none
+                )
 
         Typed letter ->
-            ( Playing "Toto"
-            , Cmd.none
-            )
+            case model of
+                Playing game -> 
+                    ( Playing { game | lettersTried = game.lettersTried ++ [letter] }
+                    , Cmd.none
+                    )
+                
+                _ -> (model, Cmd.none)
         
 
 wordOrDefault : Maybe String -> String
