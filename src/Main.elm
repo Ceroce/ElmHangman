@@ -79,7 +79,9 @@ update msg model =
         Typed letter ->
             case model of
                 Playing game -> 
-                    ( Playing { game | lettersTried = game.lettersTried ++ [letter] }
+                    ( Playing 
+                        { game | lettersTried = game.lettersTried ++ [letter] 
+                        , attempts = game.attempts + 1 }
                     , Cmd.none
                     )
                 
@@ -107,7 +109,7 @@ view model =
     Element.layout [] <| 
     case model of
         Starting -> startingScreen
-        Playing word -> playingScreen word
+        Playing game -> playingScreen game
 
 
 startingScreen : Element Msg
@@ -123,14 +125,14 @@ startingScreen =
             }
         ]
 
-playingScreen : String -> Element Msg
-playingScreen word =
+playingScreen : Game -> Element Msg
+playingScreen game =
     Element.column []
     [ Element.row 
         [ spacing 4 ] 
-        ( lettersOf word |> List.map letterView )
+        ( lettersOf game.wordToGuess |> List.map letterView )
     , Element.row []
-        [ hangmanView 0
+        [ hangmanView game.attempts
         , typingView
         ]
     ]
