@@ -25,14 +25,14 @@ main =
 
 -- MODEL
 type LetterBox =
-    Found String
-    | Unknown
+    Revealed String
+    | Concealed
 
 type alias Game = 
     { wordToGuess : String
     , lettersTried : List String
     , letterBoxes : List LetterBox
-    , attempts : Int
+    , errorCount : Int
     }
 
 type Model = 
@@ -46,9 +46,7 @@ init _ =
     )
 
 
-words : List String
-words = 
-    ["absolute", "behemoth", "cardinal", "destructive", "escape", "follow", "generate", "horny", "idiomatic", "jellyfish", "kettle", "species", "regretable", "trouser", "wisdom"]
+words = ["absolute", "behemoth", "cardinal", "destructive", "escape", "follow", "generate", "horny", "idiomatic", "jellyfish", "kettle", "lunatic", "multiple", "nothing", "oblivious", "precaution", "regretable", "species", "trouser", "universal", "veritable", "wisdom", "xenophobia", "yellow", "zenith"]
 
 -- UPDATE
 
@@ -74,7 +72,7 @@ update msg model =
                     { wordToGuess = word
                     , lettersTried = []
                     , letterBoxes = determineLetterBoxes [] word
-                    , attempts = 0
+                    , errorCount = 0
                     }
 
             in
@@ -92,7 +90,7 @@ update msg model =
                         ( Playing 
                             { game | lettersTried = lettersTried
                             , letterBoxes = determineLetterBoxes lettersTried game.wordToGuess
-                            , attempts = game.attempts + 1 }
+                            , errorCount = numberOfErrors lettersTried game.wordToGuess }
                         , Cmd.none
                         )
                 
@@ -116,9 +114,9 @@ determineLetterBoxes lettersTried wordToGuess =
 determineLetterBox : List String -> String ->  LetterBox
 determineLetterBox lettersTried letter  =
     if List.member letter lettersTried then
-        Found letter
+        Revealed letter
     else
-        Unknown
+        Concealed
 
 lettersOf : String -> List String
 lettersOf str =
@@ -128,6 +126,20 @@ recLettersOf : String -> List String -> List String
 recLettersOf str acc =
     if String.isEmpty str then acc 
     else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
+
+numberOfErrors : List String -> String -> Int
+numberOfErrors lettersTried wordToGuess = 
+    let wordLetters = lettersOf wordToGuess
+    in
+        recNumberOfErrors lettersTried wordLetters 0
+        
+recNumberOfErrors letter wordLetters count =
+    case letter of
+        [] -> count
+        (x::xs) ->
+            if List.member x wordLetters 
+                then recNumberOfErrors xs wordLetters count
+                else recNumberOfErrors xs wordLetters (count + 1)
 
 -- SUBSCRIPTIONS
 
@@ -165,7 +177,7 @@ playingScreen game =
         [ spacing 4 ] 
         ( game.letterBoxes |> List.map letterBoxView )
     , Element.row []
-        [ hangmanView game.attempts
+        [ hangmanView game.errorCount
         , typingView
         ,  text game.wordToGuess
         ]
@@ -213,5 +225,5 @@ letterBoxView letterBox =
 stringOfLetterBox : LetterBox -> String
 stringOfLetterBox letterBox =
     case letterBox of
-            Found letter -> letter
-            Unknown -> "_"
+            Revealed letter -> letter
+            Concealed -> "_"
