@@ -8,10 +8,11 @@ import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
-
 import List as List
 import Random
 import Random.List
+
+import Graphics
 
 -- MAIN
 
@@ -183,14 +184,18 @@ playingScreen game =
         ]
     ]
     
+-- hangmanView : Int -> Element Msg
+-- hangmanView errorCount =
+--     Element.el 
+--     [ width (px 100)
+--     , height (px 100)
+--     , Background.color (rgb 0.7 0.7 0.7)
+--     ] 
+--     ( errorCount |> String.fromInt |> text)
+
 hangmanView : Int -> Element Msg
-hangmanView attempts =
-    Element.el 
-    [ width (px 100)
-    , height (px 100)
-    , Background.color (rgb 0.7 0.7 0.7)
-    ] 
-    ( attempts |> String.fromInt |> text)
+hangmanView errorCount =
+    Element.html (Graphics.hangmanSvg errorCount)
 
 typingView : Element Msg
 typingView =
