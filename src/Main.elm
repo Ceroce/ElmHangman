@@ -180,7 +180,7 @@ playingScreen game =
     , Element.row []
         [ hangmanView game.errorCount
         , typingView
-        ,  text game.wordToGuess
+        -- ,  text game.wordToGuess
         ]
     ]
     
