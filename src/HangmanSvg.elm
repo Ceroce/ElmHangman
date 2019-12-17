@@ -1,4 +1,4 @@
-module Graphics exposing (..)
+module HangmanSvg exposing (hangmanSvg)
 
 import List as List
 import Svg exposing (..)

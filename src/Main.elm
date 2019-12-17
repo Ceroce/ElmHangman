@@ -12,7 +12,8 @@ import List as List
 import Random
 import Random.List
 
-import Graphics
+import HangmanSvg exposing (hangmanSvg)
+import TitleSvg exposing (titleSvg)
 
 -- MAIN
 
@@ -152,7 +153,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] <| 
+    Element.layout [ Background.color (rgb255 251 245 228) ] <| 
     case model of
         Starting -> startingScreen
         Playing game -> playingScreen game
@@ -160,14 +161,29 @@ view model =
 
 startingScreen : Element Msg
 startingScreen =
-    Element.column []
-        [ text "Welcome to Hangman"
+    Element.column [ centerX, centerY]
+        [ Element.html titleSvg
         , Input.button 
-            [ Background.color (rgb 0.4 0.6 1.0)
-            , padding 5
+            [ centerX
+            , Background.color (rgb255 39 176 239)
+            , padding 8
+            , Border.rounded 6
+            , Border.shadow 
+                { color = (rgba 0 0 0 0.5 )
+                , offset = ( 0, 2)
+                , blur = 4
+                , size = 0
+                }
+            , Font.size 32
+            , Font.family 
+                [ Font.typeface "Arial"
+                , Font.sansSerif 
+                ]
+            , Font.center
+            , Font.color (rgb 1 1 1)
             ] 
             { onPress = Just Generate
-            , label = text "Start" 
+            , label = text "START" 
             }
         ]
 
@@ -183,19 +199,10 @@ playingScreen game =
         -- ,  text game.wordToGuess
         ]
     ]
-    
--- hangmanView : Int -> Element Msg
--- hangmanView errorCount =
---     Element.el 
---     [ width (px 100)
---     , height (px 100)
---     , Background.color (rgb 0.7 0.7 0.7)
---     ] 
---     ( errorCount |> String.fromInt |> text)
 
 hangmanView : Int -> Element Msg
 hangmanView errorCount =
-    Element.html (Graphics.hangmanSvg errorCount)
+    Element.html (hangmanSvg errorCount)
 
 typingView : Element Msg
 typingView =
