@@ -26,14 +26,14 @@ main =
     }
 
 -- MODEL
-type LetterBox =
+type LetterFrame =
     Revealed String
     | Concealed
 
 type alias Game = 
     { wordToGuess : String
     , lettersTried : List String
-    , letterBoxes : List LetterBox
+    , letterFrames : List LetterFrame
     , errorCount : Int
     }
 
@@ -73,7 +73,7 @@ update msg model =
                 game =
                     { wordToGuess = word
                     , lettersTried = []
-                    , letterBoxes = determineLetterBoxes [] word
+                    , letterFrames = determineLetterFrames [] word
                     , errorCount = 0
                     }
 
@@ -91,7 +91,7 @@ update msg model =
                     in
                         ( Playing 
                             { game | lettersTried = lettersTried
-                            , letterBoxes = determineLetterBoxes lettersTried game.wordToGuess
+                            , letterFrames = determineLetterFrames lettersTried game.wordToGuess
                             , errorCount = numberOfErrors lettersTried game.wordToGuess }
                         , Cmd.none
                         )
@@ -107,14 +107,14 @@ wordOrDefault maybeWord =
         Nothing ->
             "D-Fault"
 
-determineLetterBoxes : List String -> String -> List LetterBox
-determineLetterBoxes lettersTried wordToGuess =
+determineLetterFrames : List String -> String -> List LetterFrame
+determineLetterFrames lettersTried wordToGuess =
     let wordLetters = lettersOf wordToGuess
     in
-        List.map (determineLetterBox lettersTried) wordLetters 
+        List.map (determineLetterFrame lettersTried) wordLetters 
 
-determineLetterBox : List String -> String ->  LetterBox
-determineLetterBox lettersTried letter  =
+determineLetterFrame : List String -> String ->  LetterFrame
+determineLetterFrame lettersTried letter  =
     if List.member letter lettersTried then
         Revealed letter
     else
@@ -192,7 +192,7 @@ playingScreen game =
     Element.column []
     [ Element.row 
         [ spacing 4 ] 
-        ( game.letterBoxes |> List.map letterBoxView )
+        ( game.letterFrames |> List.map letterBoxView )
     , Element.row []
         [ hangmanView game.errorCount
         , typingView
@@ -214,8 +214,8 @@ typingView =
         , text = ""
         }
 
-letterBoxView : LetterBox -> Element Msg
-letterBoxView letterBox = 
+letterBoxView : LetterFrame -> Element Msg
+letterBoxView letterFrame = 
     Element.el 
         [ width (px 76)
         , height (px 84)
@@ -232,10 +232,10 @@ letterBoxView letterBox =
         , Border.width 2
         , padding 5
         ] 
-        (text (stringOfLetterBox letterBox))
+        (text (stringOfLetterFrame letterFrame))
         
-stringOfLetterBox : LetterBox -> String
-stringOfLetterBox letterBox =
-    case letterBox of
+stringOfLetterFrame : LetterFrame -> String
+stringOfLetterFrame letterFrame =
+    case letterFrame of
             Revealed letter -> letter
             Concealed -> "_"
