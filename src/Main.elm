@@ -176,9 +176,21 @@ view model =
 
 startingScreen : Float -> Element Msg
 startingScreen animTime =
-    Element.column [ centerX, centerY]
+    Element.column 
+        [ centerX
+        , centerY
+        ]
         [ Element.html (titleSvg animTime)
-        , Input.button 
+        , spacer
+        , startButton
+        ]
+
+-- Needed because setting a spacing for the column does not work for the SVG
+spacer =
+    Element.el [height (px 30)] none
+
+startButton =
+    Input.button 
             [ centerX
             , Background.color (rgb255 39 176 239)
             , padding 8
@@ -200,7 +212,6 @@ startingScreen animTime =
             { onPress = Just Generate
             , label = text "START" 
             }
-        ]
 
 playingScreen : Game -> Element Msg
 playingScreen game =
