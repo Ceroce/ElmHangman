@@ -1,18 +1,29 @@
 module TitleSvg exposing (titleSvg)
 
+import Html exposing (Html)
 import List as List
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
-titleSvg =
+titleSvg : Float -> Html.Html msg
+titleSvg animTime =
     svg 
         [ width "612px", height "173px", viewBox "0 0 612 173", version "1.1" ] 
         [ desc [] [ text "Created with Sketch." ]
         , g [ id "Page-1", stroke "none", strokeWidth "1", fill "none", fillRule "evenodd" ] 
             [ g [ id "Title", stroke "#785B3E", strokeWidth "5" ] 
-                sticks
+                (sticksAtTime animTime)
         ] 
     ]
+
+sticksAtTime animTime =
+    let animDuration = 2500.0 -- ms
+        numberOfSticks = List.length sticks |> toFloat
+        durationPerStick = animDuration / numberOfSticks
+        toTake = animTime / durationPerStick
+            |> floor
+    in
+        List.take toTake sticks
 
 sticks = [stick0, stick1, stick2, stick3, stick4, stick5, stick6, stick7, stick8, stick9, stick10, stick11, stick12, stick13, stick14, stick15, stick16, stick17, stick18, stick19]
 stick0 = line [ x1 "2.5", y1 "4", x2 "2.5", y2 "169", id "Stick0" ] []

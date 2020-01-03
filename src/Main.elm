@@ -1,5 +1,6 @@
 module Main exposing (..)
 import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
 import Debug exposing (..)
 import Element exposing (..)
 import Element.Background as Background
@@ -37,13 +38,18 @@ type alias Game =
     , errorCount : Int
     }
 
+type alias StartAnimation = 
+    { time : Float -- ms
+    }
+
 type Model = 
-    Starting
+    Starting StartAnimation
     | Playing Game
 
 init : () -> ( Model, Cmd Msg )
 init _ = 
-    ( Starting
+    ( Starting 
+        { time = 0.0 }
     , Cmd.none
     )
 
@@ -56,6 +62,7 @@ type Msg =
     Generate 
     | Guess (Maybe String, List String)
     | Typed String
+    | OnAnimFrame Float
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -96,6 +103,14 @@ update msg model =
                         , Cmd.none
                         )
                 
+                _ -> (model, Cmd.none)
+
+        OnAnimFrame deltaTime ->
+            case model of
+                Starting startAnim -> 
+                    ( Starting { startAnim | time = startAnim.time + deltaTime }
+                    , Cmd.none
+                    )
                 _ -> (model, Cmd.none)
         
 
@@ -147,7 +162,7 @@ recNumberOfErrors letter wordLetters count =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Browser.Events.onAnimationFrameDelta OnAnimFrame
 
 -- VIEW
 
@@ -155,14 +170,14 @@ view : Model -> Html Msg
 view model =
     Element.layout [ Background.color (rgb255 251 245 228) ] <| 
     case model of
-        Starting -> startingScreen
+        Starting startAnim -> startingScreen startAnim.time
         Playing game -> playingScreen game
 
 
-startingScreen : Element Msg
-startingScreen =
+startingScreen : Float -> Element Msg
+startingScreen animTime =
     Element.column [ centerX, centerY]
-        [ Element.html titleSvg
+        [ Element.html (titleSvg animTime)
         , Input.button 
             [ centerX
             , Background.color (rgb255 39 176 239)
