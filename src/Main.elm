@@ -215,33 +215,31 @@ startButton =
 
 playingScreen : Game -> Element Msg
 playingScreen game =
-    Element.column []
+    Element.column 
+    [ centerX
+    , centerY
+    , spacing 8
+    ]
     [ Element.row 
-        [ spacing 4 ] 
-        ( game.letterFrames |> List.map letterBoxView )
-    , Element.row []
+        [ centerX
+        , spacing 4 
+        ] 
+        ( game.letterFrames |> List.map letterFrameView )
+    , Element.row [ centerX ]
         [ hangmanView game.errorCount
-        , typingView
-        -- ,  text game.wordToGuess
         ]
+    , Element.row [ centerX, spacing 4 ] 
+        (lettersRange 'A' 'M' |> List.map alphabeticButton)
+    , Element.row [ centerX, spacing 4 ] 
+        (lettersRange 'N' 'Z' |> List.map alphabeticButton)
     ]
 
 hangmanView : Int -> Element Msg
 hangmanView errorCount =
     Element.html (hangmanSvg errorCount)
 
-typingView : Element Msg
-typingView =
-    Input.text 
-        [ Input.focusedOnLoad ]
-        { label = Input.labelAbove [] (text "Type a letter" ) 
-        , onChange = Typed 
-        , placeholder = Nothing
-        , text = ""
-        }
-
-letterBoxView : LetterFrame -> Element Msg
-letterBoxView letterFrame = 
+letterFrameView : LetterFrame -> Element Msg
+letterFrameView letterFrame = 
     Element.el 
         [ width (px 76)
         , height (px 84)
@@ -265,3 +263,27 @@ stringOfLetterFrame letterFrame =
     case letterFrame of
             Revealed letter -> letter
             Concealed -> "_"
+
+lettersRange : Char -> Char -> List String
+lettersRange start end =
+    List.range (Char.toCode start) (Char.toCode end)
+    |> List.map Char.fromCode
+    |> List.map String.fromChar
+
+alphabeticButton : String -> Element Msg
+alphabeticButton letter =
+    Input.button 
+        [ width (px 50)
+        , height (px 50)
+        , Background.color (rgb 0 0 0)
+        , Font.size 24
+        , Font.family 
+            [ Font.typeface "Courier"
+            , Font.monospace 
+            ]
+        , Font.center
+        , Font.color (rgb 1 1 1)
+        ]
+        { onPress = Just (Typed letter)
+        , label = (text letter)
+        }
