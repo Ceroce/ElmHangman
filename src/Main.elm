@@ -27,13 +27,24 @@ main =
     }
 
 -- MODEL
+
+type AlphaState = NotTried | Right | Wrong
+
+-- A letter typed by the user (shown in black boxes)
+type alias Alpha =
+    { letter : Char
+    , state : AlphaState
+    }
+
+ -- A placeholder for a letter of the word to guess   
 type LetterFrame =
-    Revealed String
+    Revealed Char
     | Concealed
 
 type alias Game = 
     { wordToGuess : String
-    , lettersTried : List String
+    , lettersTried : List Char
+    , alphas : List Alpha
     , letterFrames : List LetterFrame
     , errorCount : Int
     }
@@ -61,7 +72,7 @@ words = ["absolute", "behemoth", "cardinal", "destructive", "escape", "follow", 
 type Msg = 
     Generate 
     | Guess (Maybe String, List String)
-    | Typed String
+    | Typed Char
     | OnAnimFrame Float
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,6 +91,7 @@ update msg model =
                 game =
                     { wordToGuess = word
                     , lettersTried = []
+                    , alphas = initialAlphas
                     , letterFrames = determineLetterFrames [] word
                     , errorCount = 0
                     }
@@ -89,11 +101,11 @@ update msg model =
                 , Cmd.none
                 )
 
-        Typed text ->
+        Typed letter ->
             case model of
                 Playing game -> 
-                    let letter = String.right 1 text |> String.toUpper
-                        lettersTried = game.lettersTried ++ [letter]
+                    let upperLetter = Char.toUpper letter
+                        lettersTried = upperLetter :: game.lettersTried 
                         theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
@@ -122,41 +134,39 @@ wordOrDefault maybeWord =
         Nothing ->
             "D-Fault"
 
-determineLetterFrames : List String -> String -> List LetterFrame
+initialAlphas : List Alpha
+initialAlphas = 
+    List.map (\char -> { letter = char, state = NotTried }) (charsRange 'A' 'Z')
+
+
+determineLetterFrames : List Char -> String -> List LetterFrame
 determineLetterFrames lettersTried wordToGuess =
-    let wordLetters = lettersOf wordToGuess
+    let wordLetters = String.toList wordToGuess
     in
         List.map (determineLetterFrame lettersTried) wordLetters 
 
-determineLetterFrame : List String -> String ->  LetterFrame
+determineLetterFrame : List Char -> Char ->  LetterFrame
 determineLetterFrame lettersTried letter  =
     if List.member letter lettersTried then
         Revealed letter
     else
         Concealed
 
-lettersOf : String -> List String
-lettersOf str =
-    recLettersOf str []
-
-recLettersOf : String -> List String -> List String
-recLettersOf str acc =
-    if String.isEmpty str then acc 
-    else recLettersOf (String.dropLeft 1 str) (acc ++ [String.left 1 str])
-
-numberOfErrors : List String -> String -> Int
+numberOfErrors : List Char -> String -> Int
 numberOfErrors lettersTried wordToGuess = 
-    let wordLetters = lettersOf wordToGuess
+    let wordLetters = String.toList wordToGuess
     in
         recNumberOfErrors lettersTried wordLetters 0
         
-recNumberOfErrors letter wordLetters count =
-    case letter of
+recNumberOfErrors : List Char -> List Char -> Int -> Int
+recNumberOfErrors lettersTried wordLetters count =
+    case lettersTried of
         [] -> count
-        (x::xs) ->
-            if List.member x wordLetters 
-                then recNumberOfErrors xs wordLetters count
-                else recNumberOfErrors xs wordLetters (count + 1)
+        (letter::rest) ->
+            if List.member letter wordLetters 
+                then recNumberOfErrors rest wordLetters count
+                else recNumberOfErrors rest wordLetters (count + 1)
+
 
 -- SUBSCRIPTIONS
 
@@ -229,9 +239,9 @@ playingScreen game =
         [ hangmanView game.errorCount
         ]
     , Element.row [ centerX, spacing 4 ] 
-        (lettersRange 'A' 'M' |> List.map alphabeticButton)
+        (charsRange 'A' 'M' |> List.map alphabeticButton)
     , Element.row [ centerX, spacing 4 ] 
-        (lettersRange 'N' 'Z' |> List.map alphabeticButton)
+        (charsRange 'N' 'Z' |> List.map alphabeticButton)
     ]
 
 hangmanView : Int -> Element Msg
@@ -256,21 +266,20 @@ letterFrameView letterFrame =
         , Border.width 2
         , padding 5
         ] 
-        (text (stringOfLetterFrame letterFrame))
+        ( (text << String.fromChar << charOfLetterFrame) letterFrame)
         
-stringOfLetterFrame : LetterFrame -> String
-stringOfLetterFrame letterFrame =
+charOfLetterFrame : LetterFrame -> Char
+charOfLetterFrame letterFrame =
     case letterFrame of
             Revealed letter -> letter
-            Concealed -> "_"
+            Concealed -> '_'
 
-lettersRange : Char -> Char -> List String
-lettersRange start end =
+charsRange : Char -> Char -> List Char
+charsRange start end = 
     List.range (Char.toCode start) (Char.toCode end)
     |> List.map Char.fromCode
-    |> List.map String.fromChar
 
-alphabeticButton : String -> Element Msg
+alphabeticButton : Char -> Element Msg
 alphabeticButton letter =
     Input.button 
         [ width (px 50)
@@ -285,5 +294,5 @@ alphabeticButton letter =
         , Font.color (rgb 1 1 1)
         ]
         { onPress = Just (Typed letter)
-        , label = (text letter)
+        , label = text (String.fromChar letter)
         }
