@@ -112,7 +112,7 @@ update msg model =
                             { game | lettersTried = lettersTried
                             , alphas = alphas
                             , letterFrames = determineLetterFrames lettersTried game.wordToGuess
-                            , errorCount = numberOfErrors lettersTried game.wordToGuess }
+                            , errorCount = numberOfErrors alphas }
                         , Cmd.none
                         )
                 
@@ -168,20 +168,15 @@ determineLetterFrame lettersTried letter  =
     else
         Concealed
 
-numberOfErrors : List Char -> String -> Int
-numberOfErrors lettersTried wordToGuess = 
-    let wordLetters = String.toList wordToGuess
-    in
-        recNumberOfErrors lettersTried wordLetters 0
-        
-recNumberOfErrors : List Char -> List Char -> Int -> Int
-recNumberOfErrors lettersTried wordLetters count =
-    case lettersTried of
+numberOfErrors : List Alpha -> Int
+numberOfErrors alphas = 
+    recNumberOfErrors alphas 0
+
+recNumberOfErrors : List Alpha -> Int -> Int
+recNumberOfErrors alphas count =
+    case alphas of
         [] -> count
-        (letter::rest) ->
-            if List.member letter wordLetters 
-                then recNumberOfErrors rest wordLetters count
-                else recNumberOfErrors rest wordLetters (count + 1)
+        x::xs -> if x.state == Wrong then recNumberOfErrors xs (count + 1) else recNumberOfErrors xs count
 
 
 -- SUBSCRIPTIONS
