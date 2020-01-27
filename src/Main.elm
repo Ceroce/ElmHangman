@@ -104,8 +104,7 @@ update msg model =
         Typed letter ->
             case model of
                 Playing game -> 
-                    let upperLetter = Char.toUpper letter
-                        lettersTried = upperLetter :: game.lettersTried 
+                    let lettersTried = letter :: game.lettersTried 
                         theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
@@ -239,9 +238,9 @@ playingScreen game =
         [ hangmanView game.errorCount
         ]
     , Element.row [ centerX, spacing 4 ] 
-        (charsRange 'A' 'M' |> List.map alphabeticButton)
+        (game.alphas |> List.take 13 |> List.map alphaButton)
     , Element.row [ centerX, spacing 4 ] 
-        (charsRange 'N' 'Z' |> List.map alphabeticButton)
+        (game.alphas |> List.drop 13 |> List.map alphaButton)
     ]
 
 hangmanView : Int -> Element Msg
@@ -279,8 +278,8 @@ charsRange start end =
     List.range (Char.toCode start) (Char.toCode end)
     |> List.map Char.fromCode
 
-alphabeticButton : Char -> Element Msg
-alphabeticButton letter =
+alphaButton : Alpha -> Element Msg
+alphaButton alpha =
     Input.button 
         [ width (px 50)
         , height (px 50)
@@ -293,6 +292,6 @@ alphabeticButton letter =
         , Font.center
         , Font.color (rgb 1 1 1)
         ]
-        { onPress = Just (Typed letter)
-        , label = text (String.fromChar letter)
+        { onPress = Just (Typed alpha.letter)
+        , label = text (String.fromChar alpha.letter)
         }
