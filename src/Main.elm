@@ -104,11 +104,13 @@ update msg model =
         Typed letter ->
             case model of
                 Playing game -> 
-                    let lettersTried = letter :: game.lettersTried 
+                    let lettersTried = letter :: game.lettersTried
+                        alphas = updateAlphas game.alphas letter game.wordToGuess
                         theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
                             { game | lettersTried = lettersTried
+                            , alphas = alphas
                             , letterFrames = determineLetterFrames lettersTried game.wordToGuess
                             , errorCount = numberOfErrors lettersTried game.wordToGuess }
                         , Cmd.none
@@ -137,6 +139,21 @@ initialAlphas : List Alpha
 initialAlphas = 
     List.map (\char -> { letter = char, state = NotTried }) (charsRange 'A' 'Z')
 
+updateAlphas : List Alpha -> Char -> String -> List Alpha
+updateAlphas alphas letterTyped wordToGuess =
+    List.map (\alph -> if alph.letter == letterTyped then alphaForLetterInWord letterTyped wordToGuess else alph) alphas  
+
+alphaForLetterInWord : Char -> String -> Alpha
+alphaForLetterInWord letter word =
+    { letter = letter 
+    , state = alphaStateForLetterInWord letter word
+    }
+
+alphaStateForLetterInWord : Char -> String -> AlphaState
+alphaStateForLetterInWord letter word =
+    let isLetterInWord = String.toList word |> List.member letter
+    in
+        if isLetterInWord then Right else Wrong
 
 determineLetterFrames : List Char -> String -> List LetterFrame
 determineLetterFrames lettersTried wordToGuess =
@@ -283,7 +300,7 @@ alphaButton alpha =
     Input.button 
         [ width (px 50)
         , height (px 50)
-        , Background.color (rgb 0 0 0)
+        , Background.color (backgroundColorForAlphaState alpha.state)
         , Font.size 24
         , Font.family 
             [ Font.typeface "Courier"
@@ -295,3 +312,10 @@ alphaButton alpha =
         { onPress = Just (Typed alpha.letter)
         , label = text (String.fromChar alpha.letter)
         }
+
+backgroundColorForAlphaState : AlphaState -> Color
+backgroundColorForAlphaState state =
+    case state of
+       NotTried -> (rgb 0 0 0)
+       Right -> (rgb 0 0.8 0)
+       Wrong -> (rgb 1 0 0)
