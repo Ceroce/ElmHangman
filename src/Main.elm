@@ -41,12 +41,16 @@ type LetterFrame =
     Revealed Char
     | Concealed
 
+-- Whether the game is finished
+type FinishedState = NotFinished | Won | Lost
+
 type alias Game = 
     { wordToGuess : String
     , lettersTried : List Char
     , alphas : List Alpha
     , letterFrames : List LetterFrame
     , errorCount : Int
+    , finishedState : FinishedState
     }
 
 type alias StartAnimation = 
@@ -56,8 +60,6 @@ type alias StartAnimation =
 type Model = 
     Starting StartAnimation
     | Playing Game
-    | Won Game
-    | Lost Game
 
 init : () -> ( Model, Cmd Msg )
 init _ = 
@@ -96,6 +98,7 @@ update msg model =
                     , alphas = initialAlphas
                     , letterFrames = determineLetterFrames [] word
                     , errorCount = 0
+                    , finishedState = NotFinished
                     }
 
             in
@@ -108,13 +111,16 @@ update msg model =
                 Playing game -> 
                     let lettersTried = letter :: game.lettersTried
                         alphas = updateAlphas game.alphas letter game.wordToGuess
+                        errorCount = numberOfErrors alphas
+                        finishedState = updateFinishedState errorCount
                         theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
                             { game | lettersTried = lettersTried
                             , alphas = alphas
                             , letterFrames = determineLetterFrames lettersTried game.wordToGuess
-                            , errorCount = numberOfErrors alphas }
+                            , errorCount = errorCount 
+                            , finishedState = finishedState }
                         , Cmd.none
                         )
                 
@@ -170,6 +176,13 @@ determineLetterFrame lettersTried letter  =
     else
         Concealed
 
+updateFinishedState errorCount =
+    let isGameLost = errorCount >= lostGameErrorCount
+    in
+        if isGameLost then Lost else NotFinished
+
+lostGameErrorCount = 9
+
 numberOfErrors : List Alpha -> Int
 numberOfErrors alphas = 
     recNumberOfErrors alphas 0
@@ -195,8 +208,6 @@ view model =
     case model of
         Starting startAnim -> startingScreen startAnim.time
         Playing game -> gameScreen game
-        Won game -> gameScreen game
-        Lost game -> gameScreen game
 
 
 startingScreen : Float -> Element Msg
@@ -253,8 +264,14 @@ gameScreen game =
     , Element.row [ centerX ]
         [ hangmanView game.errorCount
         ]
-    , alphaButtonsView game.alphas
+    , inputView game
     ]
+
+inputView game =
+    case game.finishedState of
+        NotFinished -> alphaButtonsView game.alphas
+        Won -> alphaButtonsView game.alphas
+        Lost -> lostView
 
 alphaButtonsView : List Alpha -> Element Msg
 alphaButtonsView alphas =
@@ -264,6 +281,11 @@ alphaButtonsView alphas =
         , Element.row [ spacing 4 ] 
             (alphas |> List.drop 13 |> List.map alphaButton)
         ]
+
+lostView : Element Msg
+lostView =
+    Element.column [ centerX ]
+        [ Element.el [] (text "You Lose!") ]
 
 hangmanView : Int -> Element Msg
 hangmanView errorCount =
