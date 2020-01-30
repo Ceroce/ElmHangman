@@ -56,6 +56,8 @@ type alias StartAnimation =
 type Model = 
     Starting StartAnimation
     | Playing Game
+    | Won Game
+    | Lost Game
 
 init : () -> ( Model, Cmd Msg )
 init _ = 
@@ -192,7 +194,9 @@ view model =
     Element.layout [ Background.color (rgb255 251 245 228) ] <| 
     case model of
         Starting startAnim -> startingScreen startAnim.time
-        Playing game -> playingScreen game
+        Playing game -> gameScreen game
+        Won game -> gameScreen game
+        Lost game -> gameScreen game
 
 
 startingScreen : Float -> Element Msg
@@ -234,12 +238,12 @@ startButton =
             , label = text "START" 
             }
 
-playingScreen : Game -> Element Msg
-playingScreen game =
+gameScreen : Game -> Element Msg
+gameScreen game =
     Element.column 
     [ centerX
     , centerY
-    , spacing 8
+    , spacing 16
     ]
     [ Element.row 
         [ centerX
@@ -249,11 +253,17 @@ playingScreen game =
     , Element.row [ centerX ]
         [ hangmanView game.errorCount
         ]
-    , Element.row [ centerX, spacing 4 ] 
-        (game.alphas |> List.take 13 |> List.map alphaButton)
-    , Element.row [ centerX, spacing 4 ] 
-        (game.alphas |> List.drop 13 |> List.map alphaButton)
+    , alphaButtonsView game.alphas
     ]
+
+alphaButtonsView : List Alpha -> Element Msg
+alphaButtonsView alphas =
+    Element.column [ centerX, spacing 4 ]
+        [ Element.row [ spacing 4 ] 
+            (alphas |> List.take 13 |> List.map alphaButton)
+        , Element.row [ spacing 4 ] 
+            (alphas |> List.drop 13 |> List.map alphaButton)
+        ]
 
 hangmanView : Int -> Element Msg
 hangmanView errorCount =
