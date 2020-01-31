@@ -112,7 +112,7 @@ update msg model =
                     let lettersTried = letter :: game.lettersTried
                         alphas = updateAlphas game.alphas letter game.wordToGuess
                         errorCount = numberOfErrors alphas
-                        finishedState = updateFinishedState errorCount
+                        finishedState = updateFinishedState errorCount alphas (String.toList game.wordToGuess)
                         theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
@@ -176,10 +176,16 @@ determineLetterFrame lettersTried letter  =
     else
         Concealed
 
-updateFinishedState errorCount =
+updateFinishedState : Int -> List Alpha -> List Char -> FinishedState
+updateFinishedState errorCount alphas lettersToGuess =
     let isGameLost = errorCount >= lostGameErrorCount
+        numberOfUniqueLetters = List.length ( uniqueLettersOf lettersToGuess )
+        isGameWon = (List.filter (\a -> a.state == Right) alphas |> List.length) == numberOfUniqueLetters
     in
-        if isGameLost then Lost else NotFinished
+        case (isGameLost, isGameWon) of
+           (False, False) -> NotFinished
+           (True, _) -> Lost
+           (_, True) -> Won
 
 lostGameErrorCount = 9
 
@@ -193,6 +199,9 @@ recNumberOfErrors alphas count =
         [] -> count
         x::xs -> if x.state == Wrong then recNumberOfErrors xs (count + 1) else recNumberOfErrors xs count
 
+uniqueLettersOf : List Char -> List Char 
+uniqueLettersOf word = 
+    List.foldl (\c l -> if List.member c l then l else c :: l ) [] word
 
 -- SUBSCRIPTIONS
 
@@ -270,7 +279,7 @@ gameScreen game =
 inputView game =
     case game.finishedState of
         NotFinished -> alphaButtonsView game.alphas
-        Won -> alphaButtonsView game.alphas
+        Won -> wonView
         Lost -> lostView
 
 alphaButtonsView : List Alpha -> Element Msg
@@ -281,6 +290,11 @@ alphaButtonsView alphas =
         , Element.row [ spacing 4 ] 
             (alphas |> List.drop 13 |> List.map alphaButton)
         ]
+
+wonView : Element Msg
+wonView =
+    Element.column [ centerX ]
+        [ Element.el [] (text "You Win!") ]
 
 lostView : Element Msg
 lostView =
