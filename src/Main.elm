@@ -226,61 +226,65 @@ startingScreen animTime =
         , centerY
         ]
         [ Element.html (titleSvg animTime)
-        , spacer
-        , startButton
+        , vSpacer 30
+        , playButton "START" 32
         ]
 
 -- Needed because setting a spacing for the column does not work for the SVG
-spacer =
-    Element.el [height (px 30)] none
+vSpacer theHeight =
+    Element.el [height (px theHeight)] none
 
-startButton =
+playButton : String -> Int -> Element Msg
+playButton caption fontSize =
     Input.button 
-            [ centerX
-            , Background.color (rgb255 39 176 239)
-            , padding 8
-            , Border.rounded 6
-            , Border.shadow 
-                { color = (rgba 0 0 0 0.5 )
-                , offset = ( 0, 2)
-                , blur = 4
-                , size = 0
-                }
-            , Font.size 32
-            , Font.family 
-                [ Font.typeface "Arial"
-                , Font.sansSerif 
-                ]
-            , Font.center
-            , Font.color (rgb 1 1 1)
-            ] 
-            { onPress = Just Generate
-            , label = text "START" 
+        [ centerX
+        , Background.color (rgb255 39 176 239)
+        , padding 8
+        , Border.rounded 6
+        , Border.shadow 
+            { color = (rgba 0 0 0 0.5 )
+            , offset = ( 0, 2)
+            , blur = 4
+            , size = 0
             }
+        , Font.size fontSize
+        , Font.family 
+            [ Font.typeface "Arial"
+            , Font.sansSerif 
+            ]
+        , Font.center
+        , Font.color (rgb 1 1 1)
+        ] 
+        { onPress = Just Generate
+        , label = text caption 
+        }
 
 gameScreen : Game -> Element Msg
 gameScreen game =
-    Element.column 
-    [ centerX
-    , centerY
-    , spacing 16
-    ]
-    [ Element.row 
-        [ centerX
-        , spacing 4 
-        ] 
-        ( game.letterFrames |> List.map letterFrameView )
-    , Element.row [ centerX ]
-        [ hangmanView game.errorCount
-        ]
-    , inputView game
-    ]
+    let thePlayScreen = playScreen game
+    in
+        case game.finishedState of
+            NotFinished -> thePlayScreen
+            Won -> Element.el [ width fill, height fill, Element.inFront wonView ] thePlayScreen
+            Lost -> Element.el [ width fill, height fill, Element.inFront lostView ] thePlayScreen
 
-inputView game =
-    case game.finishedState of
-        NotFinished -> alphaButtonsView game.alphas
-        Won -> wonView
-        Lost -> lostView
+playScreen : Game -> Element Msg
+playScreen game = 
+    Element.column 
+        [ centerX
+        , centerY
+        , spacing 16
+        ]
+        [ Element.row 
+            [ centerX
+            , spacing 4 
+            ] 
+            ( game.letterFrames |> List.map letterFrameView )
+        , Element.row [ centerX ]
+            [ hangmanView game.errorCount
+            ]
+        , alphaButtonsView game.alphas
+        ]
 
 alphaButtonsView : List Alpha -> Element Msg
 alphaButtonsView alphas =
@@ -292,14 +296,30 @@ alphaButtonsView alphas =
         ]
 
 wonView : Element Msg
-wonView =
-    Element.column [ centerX ]
-        [ Element.el [] (text "You Win!") ]
+wonView = finishedView (rgba 0 0.8 0 0.7) "You Win!"
 
 lostView : Element Msg
 lostView =
-    Element.column [ centerX ]
-        [ Element.el [] (text "You Lose!") ]
+    finishedView (rgba 1 0 0 0.7) "You lose!"
+
+finishedView backgroundColor caption =
+    Element.el 
+        [ width fill
+        , height fill
+        , Background.color backgroundColor]
+        ( Element.column 
+            [ centerX
+            , centerY
+            , spacing 40 
+            ]
+            [ Element.el 
+                [ centerX
+                , centerY
+                , Font.size 80
+                , Font.color (rgb 1 1 1)] 
+                (text caption)
+            , playButton "Play again" 32]
+        )
 
 hangmanView : Int -> Element Msg
 hangmanView errorCount =
