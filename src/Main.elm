@@ -1,6 +1,6 @@
 module Main exposing (..)
 import Browser
-import Browser.Events exposing (onAnimationFrameDelta)
+import Browser.Events exposing (onAnimationFrameDelta, onKeyPress)
 import Debug exposing (..)
 import Element exposing (..)
 import Element.Background as Background
@@ -9,6 +9,7 @@ import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
+import Json.Decode as Decode
 import List as List
 import Random
 import Random.List
@@ -78,6 +79,7 @@ type Msg =
     | Guess (Maybe String, List String)
     | Typed Char
     | OnAnimFrame Float
+    | ControlKey String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -133,6 +135,9 @@ update msg model =
                     , Cmd.none
                     )
                 _ -> (model, Cmd.none)
+
+        ControlKey _ ->
+            (model, Cmd.none)
         
 
 wordOrDefault : Maybe String -> String
@@ -206,8 +211,23 @@ uniqueLettersOf word =
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Browser.Events.onAnimationFrameDelta OnAnimFrame
+subscriptions _ =
+    Sub.batch
+    [ onAnimationFrameDelta OnAnimFrame
+    , onKeyPress keyDecoder
+    ]
+
+keyDecoder : Decode.Decoder Msg
+keyDecoder = 
+    let keyValue = Decode.field "key" Decode.string
+    in
+        Decode.map toKey keyValue
+    
+toKey : String -> Msg
+toKey keyValue = 
+    case String.uncons keyValue of
+        Just ( char, "" ) -> Typed (Char.toUpper char)
+        _ -> ControlKey keyValue
 
 -- VIEW
 
