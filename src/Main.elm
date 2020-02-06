@@ -1,7 +1,7 @@
-module Main exposing (..)
+module Main exposing (main)
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta, onKeyPress)
-import Debug exposing (..)
+-- import Debug exposing (..)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -115,7 +115,7 @@ update msg model =
                         alphas = updateAlphas game.alphas letter game.wordToGuess
                         errorCount = numberOfErrors alphas
                         finishedState = updateFinishedState errorCount alphas (String.toList game.wordToGuess)
-                        theLog = log "lettersTried" lettersTried
+                        -- theLog = log "lettersTried" lettersTried
                     in
                         ( Playing 
                             { game | lettersTried = lettersTried
